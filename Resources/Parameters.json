@@ -1,0 +1,10 @@
+{"authority": "https://login.microsoftonline.com/7521a701-aab9-4aa8-883a-150438769f28", 
+"client_id": "9e7cd023-6123-45b0-9a5b-600c79b4d0b4", 
+"scope": ["https://graph.microsoft.com/.default"], 
+"secret": "E2_8Q~815wTtkA0QJrKJFmSb2limRTSWkjlM5bMX", 
+"endpoint": "https://graph.microsoft.com/v1.0/drives/b!vQWGVJhN3U6zaOIKOFWPqqqzGkNbjD5OqsM-bVt-i6Wus8FSFgmoSrifpWqf5CiA/items/01I3LL2LUNJHFY6AKZVJHLTR6KDXZ6AWV5/children", 
+"config_location": "/root:/Customers/Rogers/Material/Material Matrix/Server_Files/Resource Files/config.json:", 
+"meta_location": "/root:/Customers/Rogers/Material/Material Matrix/Server_Files/Resource Files/meta.json:", 
+"docket_index": 0, 
+"resource_location": "/root:/Customers/Rogers/Material/Material Matrix/Server_Files/Resource Files",
+"background_color": "CFFBE7"}
