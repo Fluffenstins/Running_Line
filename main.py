@@ -1,6 +1,6 @@
 # Config needs to be set before the rest of kivy is imported
 from kivy.config import Config
-Config.set('graphics', 'resizable', True)
+Config.set('graphics', 'resizable', False)
 # Custom Modules
 from Frontend import Client
 from Line import LineCalculator
