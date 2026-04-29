@@ -1,14 +1,13 @@
-from math import pi, asin
+# Config needs to be set before the rest of kivy is imported
 from kivy.config import Config
 Config.set('graphics', 'resizable', True)
-
+# Custom Modules
 from Frontend import Client
-from kivy.core.window import Window
-
+from Line import LineCalculator
+# Public Modules
 from matplotlib import pyplot as plt
 from kivy.garden.matplotlib import FigureCanvasKivyAgg
-
-from Line import LineCalculator
+from math import pi, asin, atan
 
 
 class GUI:
@@ -19,37 +18,37 @@ class GUI:
 
 		self.nodes = []
 
-		self.client = Client(bc='#ffffffff')
-		Window.size = [700, 400.0]
+		self.client = Client(bc='#ffffffff', window_size=(700, 400))
 
 		self.header = self.client.add_label(line_width=0.2, text='Running Line', hpos=[0.1, 0.86], hsize=[0.375, 0.14], bg_color=[0.4433, 0.7246, 0.7246, 1.0], halign='left', font_size=28)['manager']
 		self.header.widget.color = [0.0, 0.0, 0.0, 1]
 
-		# button that adds a node
-		self.button2 = self.client.add_button(text='', hpos=[0.35, 0.9], hsize=[0.0357, 0.06], bg_color=[0.4433, 0.7246, 0.7246, 1.0], font_size=17)['manager']
-		self.button2.widget.bind(on_press=self.add_node)
-		# button that displays
-		self.button2 = self.client.add_button(text='', hpos=[0.4, 0.9], hsize=[0.0357, 0.06], bg_color=[0.2433, 0.5246, 0.7246, 1.0], font_size=17)['manager']
-		self.button2.widget.bind(on_press=self.render)
+		self.add_node_btn = self.client.add_button(text=' +', hpos=[0.35, 0.9], hsize=[0.0357, 0.06], bg_color=[0.4433, 0.7246, 0.7246, 1.0], font_size=17, halign='center')['manager']
+		self.add_node_btn.widget.bind(on_press=self.add_node)
 
-		self.scroll = self.client.add_scroll(hpos=[0.6,0.5], hsize=[0.3,0.5])['manager']
+		self.solve_btn = self.client.add_button(text='=', hpos=[0.4, 0.9], hsize=[0.0357, 0.06], bg_color=[0.2433, 0.5246, 0.7246, 1.0], font_size=17, halign='center')['manager']
+		self.solve_btn.widget.bind(on_press=self.render)
 
-		self.output_lbl = self.client.add_label(hpos=[0.6,0.5], hsize=[0.3,0.5], font_size=14, layout=self.scroll)['manager']
+		self.scroll = self.client.add_scroll(hpos=[0.6, 0.5], hsize=[0.3, 0.5])['manager']
+
+		self.output_lbl = self.client.add_label(hpos=[0.6, 0.5], hsize=[0.3, .5], font_size=14, layout=self.scroll)['manager']
 		self.output_lbl.draw_background('666666')
 
-		# plot
-		self.plot = FigureCanvasKivyAgg(plt.gcf())
-		self.client.add_widget(self.plot, hsize=[1, 0.5], hpos=[0, 0.05], z_index=10)
+		self.plot_display = FigureCanvasKivyAgg(plt.gcf())
+		self.client.add_widget(self.plot_display, hsize=[0.9, 0.5], hpos=[0, 0.05], z_index=10)
+
+		self.label_scroll = self.client.add_scroll(hsize=[0.05,0.3], hpos=[0.1, 0.52], spacing=8)['manager']
+		self.client.add_label(text="x", layout=self.label_scroll)
+		self.client.add_label(text="y", layout=self.label_scroll)
+		self.client.add_label(text="θ", layout=self.label_scroll)
 
 		for point, angle in zip([[0, 0], [80, -5], [200, 0]], [-25, 0, 25]):
 			self.add_node()
 			self.nodes[-1].x.widget.text = str(point[0])
 			self.nodes[-1].y.widget.text = str(point[1])
 			self.nodes[-1].theta.widget.text = str(angle)
-		# self.calc.calc_line([[0, 0], [80, -10], [200, 0]], [-25, 0, 25])
-		# self.display_info()
+
 		self.render()
-		# --
 
 		self.client.start()
 
@@ -59,7 +58,7 @@ class GUI:
 		node.move(len(self.nodes)-1)
 
 	def render(self, *args):
-		self.client.remove_widget(self.plot)
+		self.client.remove_widget(self.plot_display)
 		plt.clf()
 
 		points = []
@@ -73,18 +72,20 @@ class GUI:
 				return
 			angles.append(node.angle())
 
+		print(points)
+
 		if points:
 			try:
 				self.calc.calc_line(points, angles)
 			except ZeroDivisionError:
 				print("Bad Input!")
 
-		self.plot = FigureCanvasKivyAgg(plt.gcf())
-		self.client.add_widget(self.plot, hsize=[1, 0.5], hpos=[0, 0.05], z_index=10)
+		self.plot_display = FigureCanvasKivyAgg(plt.gcf())
+		self.client.add_widget(self.plot_display, hsize=[1, 0.5], hpos=[0, 0.05], z_index=10)
 
 		self.display_info()
 
-	def display_info(self):
+	def display_info(self, show_percentage=True):
 		self.output_lbl.widget.text = f"Max Angle Change: {round(self.calc.max_delta,2)}°\nNum Rods: {self.calc.num_rods}"
 		instructs = []
 		prev = None
@@ -93,6 +94,8 @@ class GUI:
 
 			if deg == 0:
 				word = 'Straight'
+			elif show_percentage:
+				word = f'Curve {round(angle_to_percent_approximation(deg), 2)}%'
 			else:
 				word = f'Curve {deg}°'
 
@@ -104,7 +107,7 @@ class GUI:
 
 		self.output_lbl.widget.text += '\n\n'
 		self.output_lbl.widget.text += '\n'.join([f"{i} {j} rod{'s' if j > 1 else ''}." for i, j in instructs])
-		self.output_lbl.widget.text += f"\n\nMax Radius: {round(self.calc.max_radius, 2)}"
+		self.output_lbl.widget.text += f"\n\nMin Radius: {round(self.calc.min_radius, 2)}"
 
 		# print at each rod
 
@@ -127,9 +130,7 @@ class Node:
 		self.x = self.client.add_input(layout=self.scroll, height=25, font_size=10)['manager']
 		self.y = self.client.add_input(layout=self.scroll, height=25, font_size=10)['manager']
 		self.theta = self.client.add_input(layout=self.scroll, height=25, font_size=10)['manager']
-		# self.client.add_button(text='<', layout=drop['manager'], height=20)
-		# self.client.add_button(text='>', layout=drop['manager'], height=20)
-		self.del_btn = self.client.add_button(text='x', layout=self.scroll, height=25)['manager']
+		self.del_btn = self.client.add_button(text='x', layout=self.scroll, height=25, bg_color='#f06441')['manager']
 		self.del_btn.widget.bind(on_press=self.remove)
 
 		self.move(1)
@@ -152,10 +153,18 @@ class Node:
 		if self.angle_type == 1:
 			return float(self.theta.widget.text) * 180/pi
 		if self.angle_type == 2:
-			return asin(float(self.theta.widget.text)/100) * 180/pi
+			return atan(float(self.theta.widget.text)/100) * 180/pi
 
 	def coords(self):
 		return [float(self.x.widget.text), float(self.y.widget.text)]
 
 
+def angle_to_percent_approximation(angle, rads=False):
+	if not rads:
+		angle = angle*pi/180
+	assumed_percentage = 0
+	percent_incline_change = atan(assumed_percentage + angle) - atan(assumed_percentage)
+	return percent_incline_change * 100
+
+print(angle_to_percent_approximation(1.56))
 gui = GUI()

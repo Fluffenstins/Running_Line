@@ -15,11 +15,11 @@ class LineCalculator:
 
         # calc min_radius
         if self.min_angle == 0:
-            self.max_radius = float('inf')
+            self.min_radius = float('inf')
         else:
             a = self.min_angle*pi/180
             b = (pi-a)/2
-            self.max_radius = self.rod_length*sin(b)/sin(a)
+            self.min_radius = self.rod_length*sin(b)/sin(a)
 
         self.num_rods = 0
         self.instructions = []
@@ -39,7 +39,7 @@ class LineCalculator:
         rod_pos = [round(i, 2) for i in rod_pos]
 
         if percent:
-            angle = sin(rads)
+            angle = tan(rads)
         else:
             angle = round(rads*180/pi, 2)
 
@@ -66,27 +66,27 @@ class LineCalculator:
             a2 = angles[n]
 
             ret += self.subdivide(p1, p2, a1, a2, self.rod_length)
-
+        print(f"ret {ret}")
         self.end_pos = f"End Pos: ({ret[-1][0]},{ret[-1][1]})"
         self.plot_points(ret, points)
 
     def subdivide(self, p1, p2, a1, a2, rod_length=3):
         angle_delta = (a2-a1)*pi/180  # Note: we now accept rads by default
-        m1 = tan(a1*pi/180)
-        m2 = tan(a2*pi/180)
-        b1 = m1*p1[0] - p1[1]
-        b2 = m2*p2[0] - p2[1]
-        x_int = (b1-b2)/(m1-m2)
-        y_int = m1*x_int-b1
+        m1 = tan(a1*pi/180)  # slope 1
+        m2 = tan(a2*pi/180)  # slope 2
+        b1 = m1*p1[0] - p1[1]  # y offset
+        b2 = m2*p2[0] - p2[1]  # y offset
+        x_int = (b1-b2)/(m1-m2)  # total distance along x
+        y_int = m1*x_int-b1  # total distance along 7
         d1 = round(distance(p1, [x_int, y_int]),3)
         d2 = round(distance(p2, [x_int, y_int]),3)
         r_prime = min(d1, d2)*tan((pi-angle_delta)/2)
-        r = min(r_prime, self.max_radius)
+        r = max(r_prime, self.min_radius)
 
         d = min(d1, d2)*r/r_prime
 
         # d = min(d1, d2)*sin(angle_delta)/sin((pi-angle_delta)/2)
-        s = angle_delta*r
+        s = angle_delta*r  # arc length that we expect the line to curve along
         s_tot = s + max(d1, d2) - r
 
         ret = [p1]
@@ -125,6 +125,8 @@ class LineCalculator:
         self.rods += ret
         self.angles += angles
 
+        print(f"instructions {ret}")
+
         return ret
 
     @staticmethod
@@ -157,5 +159,5 @@ def bend_radius_to_angle(radius, rod_length=3, rads=True):
 
 
 if __name__ == "__main__":
-    print(bend_radius_to_angle(33.2, 3, False))
+    print(bend_radius_to_angle(25, 3, False))
     LineCalculator().calc_line([[0,0], [20, -5], [70, 0]], [-25, 0, 25])
